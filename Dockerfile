@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1.6
 FROM ubuntu:24.04
 
-# Avoid interactive prompts during apt installs
+# Prevent apt from prompting questions during build
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Create a non-root user (helps with file permissions when mounting volumes)
+# Create a non-root user (helps when mounting volumes and avoids running everything as root)
 ARG USER=netops
 ARG UID=1000
 ARG GID=1000
 
-# ---- Base packages: tooling for downloads, git, JSON parsing, SSH, networking, debugging, and Python ----
-# --no-install-recommends keeps the image smaller by skipping "recommended" extras
+# ---- Base packages: downloads, git, JSON tools, SSH client, network troubleshooting, editors, Python, and build deps ----
+# --no-install-recommends keeps the image smaller by skipping extra suggested packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl wget git unzip zip jq \
     openssh-client \
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ---- pipx: install Python CLI tools in isolated environments (great for Ansible, etc.) ----
+# ---- pipx: install Python CLI tools in isolated environments (ideal for Ansible) ----
 ENV PIPX_HOME=/opt/pipx
 ENV PIPX_BIN_DIR=/usr/local/bin
 RUN pipx ensurepath
@@ -32,14 +32,13 @@ RUN pipx ensurepath
 RUN groupadd -g ${GID} ${USER} \
  && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
 
-# ---- Install Ansible (isolated with pipx) + common network vendor collections ----
-# This avoids mixing Ansible dependencies with your main Python venv
+# ---- Install Ansible (isolated via pipx) ----
 RUN pipx install "ansible-core==2.17.*" \
- && pipx inject ansible-core argcomplete passlib paramiko jmespath \
- && ansible-galaxy collection install \
-    cisco.ios cisco.nxos cisco.asa arista.eos junipernetworks.junos \
-    fortinet.fortios paloaltonetworks.panos check_point.mgmt \
-    community.general community.network \
+ && pipx inject ansible-core argcomplete passlib paramiko jmespath
+
+# ---- Install Ansible Galaxy collections from a file (clean & maintainable) ----
+COPY collections.yml /tmp/collections.yml
+RUN ansible-galaxy collection install -r /tmp/collections.yml \
  && rm -rf /root/.ansible
 
 # ---- Python virtual environment for your automation libraries (requirements.txt) ----
@@ -57,11 +56,11 @@ RUN curl -fsSL -o /usr/local/bin/yq \
     https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
  && chmod +x /usr/local/bin/yq
 
-# ---- Default working directory (mount your repo here) ----
+# ---- Default workspace directory (mount your repo here) ----
 WORKDIR /workspace
 RUN chown -R ${USER}:${USER} /workspace
 
-# Switch to the non-root user for day-to-day work
+# Run as non-root by default
 USER ${USER}
 
 # Quality-of-life defaults
