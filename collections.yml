@@ -1,0 +1,13 @@
+---
+collections:
+  - name: cisco.ios
+  - name: cisco.nxos
+  - name: cisco.asa
+  - name: arista.eos
+  - name: junipernetworks.junos
+  - name: fortinet.fortios
+  - name: paloaltonetworks.panos
+  - name: check_point.mgmt
+  - name: community.general
+  - name: community.network
+

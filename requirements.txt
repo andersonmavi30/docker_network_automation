@@ -1,0 +1,27 @@
+# Core automation / API work
+requests
+httpx
+rich
+pyyaml
+jinja2
+jmespath
+
+# Network automation
+netmiko
+napalm
+nornir
+nornir-netmiko
+nornir-napalm
+scrapli
+scrapli-netconf
+ncclient
+
+# Source of truth / inventory
+pynetbox
+
+# SNMP (monitoring/validation)
+pysnmp
+
+# Testing
+pytest
+
