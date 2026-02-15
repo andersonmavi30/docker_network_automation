@@ -28,9 +28,10 @@ ENV PIPX_HOME=/opt/pipx
 ENV PIPX_BIN_DIR=/usr/local/bin
 RUN pipx ensurepath
 
-# ---- Create the non-root user inside the container ----
-RUN groupadd -g ${GID} ${USER} \
- && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USER}
+# ---- Create the non-root user inside the container (do not fail if GID already exists) ----
+RUN if ! getent group ${GID} >/dev/null; then groupadd -g ${GID} ${USER}; fi \
+ && GROUP_NAME="$(getent group ${GID} | cut -d: -f1)" \
+ && useradd -m -u ${UID} -g "${GROUP_NAME}" -s /bin/bash ${USER}
 
 # ---- Install Ansible (isolated via pipx) ----
 RUN pipx install "ansible-core==2.17.*" \
