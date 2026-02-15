@@ -57,8 +57,10 @@ Includes key libraries such as:
 ### 🧱 Build the image
 ```bash
 docker build -t andersonmavi30/docker_network_automation:2.0.0 .
+
 ▶️ Run interactive
 docker run --rm -it andersonmavi30/docker_network_automation:2.0.0 bash
+
 ✅ Validate tools
 Inside the container:
 
@@ -67,6 +69,7 @@ ansible-galaxy collection list | head
 
 python -c "import netmiko, napalm, nornir, scrapli, ncclient; print('OK')"
 yq --version
+
 📁 Recommended: Mount Your Workspace
 Work directly from your local repo/files as /workspace:
 
@@ -74,13 +77,16 @@ docker run --rm -it \
   -v "$PWD:/workspace" \
   -w /workspace \
   andersonmavi30/docker_network_automation:2.0.0 bash
+
 📦 Publish to Docker Hub
 docker login
 docker push andersonmavi30/docker_network_automation:2.0.0
 🏷️ Optional: tag as latest
 docker tag andersonmavi30/docker_network_automation:2.0.0 andersonmavi30/docker_network_automation:latest
 docker push andersonmavi30/docker_network_automation:latest
+
 🧪 Example Use Cases
+
 🤖 Run an Ansible command (generic example)
 Requires your own inventory and credentials per vendor.
 
@@ -99,8 +105,10 @@ scripts/ (Python automation)
 templates/
 
 🧬 Works Great With Labs
+
 🧪 PNetLab / EVE-NG
 Older Docker/kernels may fail to build due to seccomp/kernel syscall limitations.
+
 ✅ Recommended workflow:
 
 Build on a modern host
@@ -111,10 +119,12 @@ Pull and run inside PNetLab/EVE-NG
 
 docker pull andersonmavi30/docker_network_automation:2.0.0
 docker run --rm -it andersonmavi30/docker_network_automation:2.0.0 bash
+
 🧱 Containerlab
 Use this image as your automation “jumpbox” container to manage the lab nodes.
 
 🔧 Customization
+
 ➕ Add more Python libraries
 Edit requirements.txt and rebuild.
 
@@ -122,6 +132,7 @@ Edit requirements.txt and rebuild.
 Edit collections.yml and rebuild.
 
 🧯 Troubleshooting
+
 ❌ No space left on device during build
 Your host ran out of disk space in Docker storage.
 Check usage:
@@ -130,10 +141,12 @@ docker system df
 Clean build cache (careful in shared systems):
 
 docker builder prune
+
 👤 UID/GID conflicts
 The Dockerfile is designed to handle existing UID/GID so the build doesn’t fail.
 
 🔒 Security & Best Practices
+
 👤 Runs as non-root user by default (netops)
 
 🧪 Ansible installed via pipx (isolated environment)
@@ -141,6 +154,7 @@ The Dockerfile is designed to handle existing UID/GID so the build doesn’t fai
 🐍 Python libs installed into a dedicated venv: /opt/venv
 
 🗺️ Roadmap
+
 ✅ Add sample playbooks & inventories
 
 ✅ Add GitHub Actions for automatic build + push to Docker Hub
