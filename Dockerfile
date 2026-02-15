@@ -1,73 +1,87 @@
 # syntax=docker/dockerfile:1.6
+
 FROM ubuntu:24.04
 
-# Prevent apt from prompting questions during build
 ARG DEBIAN_FRONTEND=noninteractive
-
-# Create a non-root user (helps when mounting volumes and avoids running everything as root)
 ARG USER=netops
 ARG UID=1000
 ARG GID=1000
 
-# ---- Base packages: downloads, git, JSON tools, SSH client, network troubleshooting, editors, Python, and build deps ----
-# --no-install-recommends keeps the image smaller by skipping extra suggested packages
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PIPX_BIN_DIR=/usr/local/bin \
+    PIPX_HOME=/opt/pipx \
+    VENV_PATH=/opt/venv \
+    PATH=/opt/venv/bin:/usr/local/bin:$PATH
+
+# Base tools + Python + build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl wget git unzip zip jq \
+    ca-certificates \
+    curl wget git jq \
     openssh-client \
     iputils-ping dnsutils traceroute netcat-openbsd \
     tcpdump iproute2 \
     vim nano less \
     rsync \
-    python3 python3-venv python3-pip pipx \
-    build-essential gcc g++ make \
-    libssl-dev libffi-dev \
+    python3 python3-venv python3-pip \
+    pipx \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ---- pipx: install Python CLI tools in isolated environments (ideal for Ansible) ----
-ENV PIPX_HOME=/opt/pipx
-ENV PIPX_BIN_DIR=/usr/local/bin
+# Ensure pipx path
 RUN pipx ensurepath
 
-# ---- Create the non-root user inside the container (do not fail if GID already exists) ----
-RUN if ! getent group ${GID} >/dev/null; then groupadd -g ${GID} ${USER}; fi \
- && GROUP_NAME="$(getent group ${GID} | cut -d: -f1)" \
- && useradd -m -u ${UID} -g "${GROUP_NAME}" -s /bin/bash ${USER}
+# --- Create non-root user (handles existing UID/GID) ---
+RUN set -eux; \
+    # GID: create if missing, otherwise reuse existing group name
+    if ! getent group "${GID}" >/dev/null; then \
+      groupadd -g "${GID}" "${USER}"; \
+    fi; \
+    GROUP_NAME="$(getent group "${GID}" | cut -d: -f1)"; \
+    \
+    # UID: if already exists, reuse that user (rename to netops); else create netops
+    if getent passwd "${UID}" >/dev/null; then \
+      EXISTING_USER="$(getent passwd "${UID}" | cut -d: -f1)"; \
+      if [ "${EXISTING_USER}" != "${USER}" ]; then \
+        usermod -l "${USER}" "${EXISTING_USER}"; \
+      fi; \
+      usermod -g "${GROUP_NAME}" "${USER}"; \
+      usermod -d "/home/${USER}" -m "${USER}" || true; \
+    else \
+      useradd -m -u "${UID}" -g "${GROUP_NAME}" -s /bin/bash "${USER}"; \
+    fi
 
-# ---- Install Ansible (isolated via pipx) ----
-RUN pipx install "ansible-core==2.17.*" \
- && pipx inject ansible-core argcomplete passlib paramiko jmespath
+# Install Ansible via pipx (isolated from venv)
+RUN pipx install --include-deps ansible
 
-# ---- Install Ansible Galaxy collections from a file (clean & maintainable) ----
+# Copy dependency files
 COPY collections.yml /tmp/collections.yml
-RUN ansible-galaxy collection install -r /tmp/collections.yml \
- && rm -rf /root/.ansible
-
-# ---- Python virtual environment for your automation libraries (requirements.txt) ----
-ENV VENV_PATH=/opt/venv
-RUN python3 -m venv ${VENV_PATH}
-ENV PATH="${VENV_PATH}/bin:${PATH}"
-
-# Copy Python dependencies and install them into the venv
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -U pip wheel setuptools \
- && pip install --no-cache-dir -r /tmp/requirements.txt
 
-# ---- Optional: yq binary for quick YAML processing in scripts/pipelines ----
-RUN curl -fsSL -o /usr/local/bin/yq \
+# Install Ansible collections (system-wide for the image)
+RUN ansible-galaxy collection install -r /tmp/collections.yml
+
+# Create venv and install Python libs
+RUN python3 -m venv "${VENV_PATH}" \
+    && "${VENV_PATH}/bin/pip" install --upgrade pip setuptools wheel \
+    && "${VENV_PATH}/bin/pip" install -r /tmp/requirements.txt
+
+# Install yq (binary)
+RUN curl -L -o /usr/local/bin/yq \
     https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
- && chmod +x /usr/local/bin/yq
+    && chmod +x /usr/local/bin/yq
 
-# ---- Default workspace directory (mount your repo here) ----
+# Workspace
 WORKDIR /workspace
-RUN chown -R ${USER}:${USER} /workspace
 
-# Run as non-root by default
-USER ${USER}
+# Use non-root by default
+USER netops
 
-# Quality-of-life defaults
-ENV PYTHONUNBUFFERED=1
-ENV ANSIBLE_HOST_KEY_CHECKING=False
-
-# Start an interactive shell by default
-CMD ["/bin/bash"]
+CMD [ "bash" ]
 
