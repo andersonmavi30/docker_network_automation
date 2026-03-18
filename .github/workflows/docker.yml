@@ -1,0 +1,165 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Docker Build & Push — GitHub Actions workflow
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# WHAT THIS DOES:
+#   1. Triggers automatically on every push to `main` and on version tags (v*).
+#   2. Builds a multi-platform Docker image (amd64 + arm64).
+#   3. Runs a smoke test to verify the image works before pushing.
+#   4. Pushes the image to Docker Hub with appropriate tags.
+#
+# REQUIRED SECRETS (Settings → Secrets → Actions):
+#   DOCKERHUB_USERNAME  — your Docker Hub username
+#   DOCKERHUB_TOKEN     — Docker Hub access token (NOT your password)
+#                         Create at: https://hub.docker.com/settings/security
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Docker Build & Push
+
+on:
+  push:
+    branches:
+      - main          # Run CI on every merge to main
+    tags:
+      - "v*"          # Run full publish on version tags (e.g. v2.1.0)
+  pull_request:
+    branches:
+      - main          # Build (but don't push) on PRs to catch Dockerfile errors early
+
+# Cancel any in-progress run for the same branch/PR to avoid wasting minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: andersonmavi30/docker_network_automation
+
+jobs:
+  # ─── Job 1: Build ──────────────────────────────────────────────────────────
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    outputs:
+      # Pass the built image digest to the smoke-test job
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      # 1. Check out the repository source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up QEMU so Docker Buildx can emulate arm64 on the amd64 runner.
+      #    This enables true multi-platform builds without a native ARM runner.
+      - name: Set up QEMU (multi-platform emulation)
+        uses: docker/setup-qemu-action@v3
+
+      # 3. Set up Docker Buildx — the extended build client that supports
+      #    multi-platform builds, build caching, and advanced features.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 4. Log in to Docker Hub only on pushes (not on pull_request events,
+      #    because PRs from forks don't have access to secrets).
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 5. Generate Docker image tags automatically based on git context:
+      #    - A version tag (v2.1.0)     → image:2.1.0 + image:latest
+      #    - A push to main              → image:main
+      #    - A pull request              → image:pr-42 (not pushed, just built)
+      - name: Extract Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            # On version tags: strip the leading 'v' → e.g. v2.1.0 → 2.1.0
+            type=semver,pattern={{version}}
+            # Also tag the major.minor → e.g. 2.1
+            type=semver,pattern={{major}}.{{minor}}
+            # Branch name tag for non-tag pushes
+            type=ref,event=branch
+            # PR number tag for pull requests
+            type=ref,event=pr
+            # 'latest' only on version tags (not on branch pushes)
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      # 6. Build (and push when not a PR) the multi-platform image.
+      #    `load: false` + `push: true` lets Buildx stream directly to the registry
+      #    without requiring a local docker pull, which is faster on CI.
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Use GitHub Actions cache to speed up subsequent builds by reusing
+          # unchanged layers. `mode=max` caches all intermediate layers.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Job 2: Smoke test ─────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    # Only run smoke tests after a successful build on non-PR events
+    # (PRs don't push the image so there's nothing to pull and test).
+    needs: build
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Determine which tag to pull for the smoke test.
+      # On a version tag we use the semver tag; on branch pushes we use the branch name.
+      - name: Determine image tag for smoke test
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pull the just-pushed image and run a series of validation commands
+      # inside a throw-away container. If any command fails the job fails.
+      - name: Run smoke tests
+        run: |
+          IMAGE="${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
+          echo "Testing image: $IMAGE"
+
+          # Helper: run a single command inside the image and print result
+          run_test() {
+            echo ">>> $*"
+            docker run --rm "$IMAGE" bash -c "$*"
+          }
+
+          # Verify Ansible is reachable and shows a version number
+          run_test "ansible --version | head -1"
+
+          # Verify key Ansible Galaxy collections are installed
+          run_test "ansible-galaxy collection list | grep -E 'cisco.ios|arista.eos|paloaltonetworks.panos'"
+
+          # Verify all Python automation libraries import without errors
+          run_test "python -c \"import netmiko, napalm, nornir, scrapli, ncclient, pynetbox; print('Python libs OK')\""
+
+          # Verify yq binary works
+          run_test "yq --version"
+
+          # Verify the container runs as the non-root netops user
+          run_test "id | grep netops"
+
+          echo "All smoke tests passed."

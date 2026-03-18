@@ -1,27 +1,45 @@
-# Core automation / API work
-requests
-httpx
-rich
-pyyaml
-jinja2
-jmespath
+# ─── Core HTTP / API ─────────────────────────────────────────────────────────
+# requests: standard HTTP client, used by almost all automation scripts
+requests==2.32.3
+# httpx: async-capable HTTP client, useful for concurrent API calls
+httpx==0.27.2
+# rich: beautiful terminal output (tables, progress bars, syntax highlighting)
+rich==13.9.4
 
-# Network automation
-netmiko
-napalm
-nornir
-nornir-netmiko
-nornir-napalm
-scrapli
-scrapli-netconf
-ncclient
+# ─── Data / Templating ───────────────────────────────────────────────────────
+# pyyaml: read/write YAML (inventories, configs, Ansible vars)
+pyyaml==6.0.2
+# jinja2: template engine — render device configs, playbooks, reports
+jinja2==3.1.4
+# jmespath: JMESPath queries for JSON/dict structures (used by Ansible too)
+jmespath==1.0.1
 
-# Source of truth / inventory
-pynetbox
+# ─── Network automation ──────────────────────────────────────────────────────
+# netmiko: SSH sessions to multi-vendor network devices (Cisco, Juniper, etc.)
+netmiko==4.4.0
+# napalm: unified API to retrieve/push config across vendors (IOS, EOS, JunOS…)
+napalm==5.0.0
+# nornir: pure-Python automation framework with parallel task execution
+nornir==3.4.1
+# nornir-netmiko: nornir plugin that adds netmiko tasks
+nornir-netmiko==1.0.1
+# nornir-napalm: nornir plugin that adds napalm tasks
+nornir-napalm==0.4.0
+# scrapli: fast, async-ready SSH/Telnet driver for network devices
+scrapli==2024.1.30
+# scrapli-netconf: NETCONF transport plugin for scrapli
+scrapli-netconf==2024.1.30
+# ncclient: low-level NETCONF client (used by napalm, juniper, etc.)
+ncclient==0.6.15
 
-# SNMP (monitoring/validation)
-pysnmp
+# ─── Source of truth / Inventory ─────────────────────────────────────────────
+# pynetbox: Python client for the NetBox IPAM/DCIM REST API
+pynetbox==7.4.1
 
-# Testing
-pytest
+# ─── Monitoring / Validation ─────────────────────────────────────────────────
+# pysnmp: SNMP v1/v2c/v3 library — poll device OIDs, verify reachability
+pysnmp==6.2.6
 
+# ─── Testing ─────────────────────────────────────────────────────────────────
+# pytest: test runner for unit/integration tests of automation scripts
+pytest==8.3.3
