@@ -1,0 +1,39 @@
+# ─── Git internals ───────────────────────────────────────────────────────────
+# The .git directory contains the full repository history.
+# It is never needed inside the Docker build context and can be several MBs.
+.git
+.gitignore
+.gitattributes
+
+# ─── GitHub / CI metadata ────────────────────────────────────────────────────
+# CI workflow files and GitHub config are not needed inside the image.
+.github
+
+# ─── Documentation ───────────────────────────────────────────────────────────
+# These files are useful for humans reading the repo but add weight to the
+# build context and are irrelevant to the running container.
+README.md
+LICENSE
+*.md
+
+# ─── Editor / OS artifacts ───────────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo
+*~
+.idea
+.vscode
+
+# ─── Local secrets / credentials ─────────────────────────────────────────────
+# Never accidentally COPY these into the image.
+*.env
+.env*
+secrets/
+credentials/
+vault_pass*
+
+# ─── Python cache ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/

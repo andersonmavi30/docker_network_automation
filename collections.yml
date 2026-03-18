@@ -1,13 +1,39 @@
 ---
+# Ansible Galaxy collections installed at image build time.
+# Versions are pinned here for reproducible builds — the same collection
+# version is guaranteed across every docker build regardless of when it runs.
+# To upgrade a collection: bump its version and rebuild the image.
 collections:
+  # ── Cisco ──────────────────────────────────────────────────────────────────
   - name: cisco.ios
+    version: "9.0.3"
   - name: cisco.nxos
+    version: "9.3.1"
   - name: cisco.asa
-  - name: arista.eos
-  - name: junipernetworks.junos
-  - name: fortinet.fortios
-  - name: paloaltonetworks.panos
-  - name: check_point.mgmt
-  - name: community.general
-  - name: community.network
+    version: "6.0.0"
 
+  # ── Arista ─────────────────────────────────────────────────────────────────
+  - name: arista.eos
+    version: "10.0.1"
+
+  # ── Juniper ────────────────────────────────────────────────────────────────
+  - name: junipernetworks.junos
+    version: "9.1.0"
+
+  # ── Fortinet ───────────────────────────────────────────────────────────────
+  - name: fortinet.fortios
+    version: "2.3.8"
+
+  # ── Palo Alto Networks ─────────────────────────────────────────────────────
+  - name: paloaltonetworks.panos
+    version: "2.21.2"
+
+  # ── Check Point ────────────────────────────────────────────────────────────
+  - name: check_point.mgmt
+    version: "6.2.1"
+
+  # ── Community ──────────────────────────────────────────────────────────────
+  - name: community.general
+    version: "10.3.1"
+  - name: community.network
+    version: "5.1.0"
