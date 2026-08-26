@@ -1,9 +1,8 @@
 # syntax=docker/dockerfile:1.6
 
-FROM ubuntu:24.04
+FROM rockylinux:10
 
 # ─── Build-time arguments ────────────────────────────────────────────────────
-ARG DEBIAN_FRONTEND=noninteractive
 ARG USER=netops
 ARG UID=1000
 ARG GID=1000
@@ -33,27 +32,29 @@ ENV LANG=C.UTF-8 \
     PATH=/opt/venv/bin:/usr/local/bin:$PATH
 
 # ─── System packages ─────────────────────────────────────────────────────────
-# --no-install-recommends keeps the layer lean by skipping suggested extras.
-# Build-time libs (build-essential, libffi-dev …) are needed to compile Python
+# epel-release enables the EPEL repo, which provides pipx on Rocky Linux.
+# Build-time libs (gcc, libffi-devel …) are needed to compile Python
 # C-extensions (cryptography, lxml, Scrapli, etc.).
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN dnf install -y epel-release \
+    && dnf install -y \
     ca-certificates \
     curl wget git jq \
-    openssh-client \
-    iputils-ping dnsutils traceroute netcat-openbsd \
-    tcpdump iproute2 \
-    vim nano less \
+    openssh-clients \
+    iputils bind-utils traceroute nmap-ncat \
+    tcpdump iproute \
+    vim-enhanced nano less \
     rsync \
-    python3 python3-venv python3-pip \
+    python3 python3-pip python3-devel \
     pipx \
-    build-essential \
-    libffi-dev \
-    libssl-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+    gcc gcc-c++ make \
+    libffi-devel \
+    openssl-devel \
+    libxml2-devel \
+    libxslt-devel \
+    libjpeg-turbo-devel \
+    zlib-devel \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
 
 # ─── Non-root user ───────────────────────────────────────────────────────────
 # We create a dedicated 'netops' user instead of running as root.
