@@ -20,20 +20,36 @@ collections:
   - name: junipernetworks.junos
     version: "9.1.0"
 
-  # ── Fortinet ───────────────────────────────────────────────────────────────
-  - name: fortinet.fortios
-    version: "2.3.8"
+  # ── Aruba / HPE ────────────────────────────────────────────────────────────
+  # aoscx: Aruba CX switches (8360, 6300, 6400...) via REST + SSH
+  - name: arubanetworks.aoscx
+    version: "4.5.1"
+  # aos_switch: ArubaOS-Switch / HPE ProVision (2530, 2930, 5400R...)
+  - name: arubanetworks.aos_switch
+    version: "1.7.0"
 
-  # ── Palo Alto Networks ─────────────────────────────────────────────────────
-  - name: paloaltonetworks.panos
-    version: "2.21.2"
+  # ── Dell ───────────────────────────────────────────────────────────────────
+  # SmartFabric OS10 (S41xx, S52xx, Z9xxx)
+  - name: dellemc.os10
+    version: "1.2.7"
+  # Legacy OS9 (S4048, S6010, Z9100)
+  - name: dellemc.os9
+    version: "1.0.4"
+  # Legacy OS6 (N1500, N2000, N3000, N4000)
+  - name: dellemc.os6
+    version: "1.0.7"
 
-  # ── Check Point ────────────────────────────────────────────────────────────
-  - name: check_point.mgmt
-    version: "6.2.1"
+  # ── Allied Telesis ─────────────────────────────────────────────────────────
+  # AlliedWare Plus (x220, x330, x530, x950...)
+  - name: alliedtelesis.awplus
+    version: "1.3.0"
 
   # ── Community ──────────────────────────────────────────────────────────────
   - name: community.general
     version: "10.3.1"
+  # community.network covers the vendors without a dedicated collection:
+  #   exos_*     → Extreme Networks EXOS
+  #   ce_*       → Huawei CloudEngine
+  #   comware_*  → HP/H3C Comware
   - name: community.network
     version: "5.1.0"
