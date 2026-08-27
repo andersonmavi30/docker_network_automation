@@ -12,7 +12,7 @@ A **Network Automation / DevNet / NetDevOps Docker image** built to keep tooling
 - Keep dependency isolation clean:
   - **Ansible via `pipx`**
   - **Python libraries in `/opt/venv`**
-- Support multi-vendor automation workflows (Cisco, Fortinet, Palo Alto, Check Point, Juniper, Arista, etc.).
+- Support multi-vendor automation workflows (Cisco, Arista, Juniper, Aruba/HPE, Dell, Allied Telesis, Extreme, Huawei, HP/H3C, etc.).
 
 ## 🧰 What’s Inside
 
@@ -30,6 +30,22 @@ Includes libraries for:
 ### 🤖 Ansible (installed via `pipx`)
 - Ansible is isolated from the Python venv.
 - Collections are installed from `collections.yml`.
+
+### 🏷️ Supported vendors (Ansible collections)
+
+The image ships pinned collections focused on **network switching/routing vendors**:
+
+| Vendor | Collections | Platforms |
+|---|---|---|
+| **Cisco** | `cisco.ios`, `cisco.nxos`, `cisco.asa` | IOS/IOS-XE, NX-OS, ASA |
+| **Arista** | `arista.eos` | EOS |
+| **Juniper** | `junipernetworks.junos` | Junos |
+| **Aruba / HPE** | `arubanetworks.aoscx`, `arubanetworks.aos_switch` | Aruba CX (8360, 6300, 6400...), ArubaOS-Switch / ProVision (2530, 2930, 5400R...) |
+| **Dell** | `dellemc.os10`, `dellemc.os9`, `dellemc.os6` | SmartFabric OS10, legacy OS9, legacy OS6 (N-series) |
+| **Allied Telesis** | `alliedtelesis.awplus` | AlliedWare Plus (x220, x330, x530, x950...) |
+| **Extreme / Huawei / HP-H3C** | `community.network` | EXOS (`exos_*`), CloudEngine (`ce_*`), Comware (`comware_*`) |
+
+Plus `community.general` for general-purpose modules.
 
 ### 🛠️ Network & Linux utilities
 Includes tools like:
