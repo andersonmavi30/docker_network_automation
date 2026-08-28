@@ -43,3 +43,7 @@ pysnmp==6.2.6
 # ─── Testing ─────────────────────────────────────────────────────────────────
 # pytest: test runner for unit/integration tests of automation scripts
 pytest==8.3.3
+# textfsm: parse semi-structured CLI output into structured data
+textfsm==2.1.0
+# ntc-templates: 500+ ready-made TextFSM templates (Cisco, Aruba, Dell, Huawei, Juniper...)
+ntc-templates==9.2.0
