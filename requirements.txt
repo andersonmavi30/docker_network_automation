@@ -47,3 +47,5 @@ pytest==8.3.3
 textfsm==2.1.0
 # ntc-templates: 500+ ready-made TextFSM templates (Cisco, Aruba, Dell, Huawei, Juniper...)
 ntc-templates==9.2.0
+# pygnmi: gNMI client — standard management interface for SONiC and modern NOS
+pygnmi==0.8.15
