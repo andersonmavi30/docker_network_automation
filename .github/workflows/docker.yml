@@ -151,10 +151,10 @@ jobs:
           run_test "ansible --version | head -1"
 
           # Verify key Ansible Galaxy collections are installed
-          run_test "ansible-galaxy collection list | grep -E 'cisco.ios|arista.eos|paloaltonetworks.panos'"
+          run_test "ansible-galaxy collection list | grep -E 'cisco.ios|arista.eos|arubanetworks.aoscx|dellemc.os10|alliedtelesis.awplus'"
 
           # Verify all Python automation libraries import without errors
-          run_test "python -c \"import netmiko, napalm, nornir, scrapli, ncclient, pynetbox; print('Python libs OK')\""
+          run_test "python -c \"import netmiko, napalm, nornir, scrapli, ncclient, pynetbox, textfsm; print('Python libs OK')\""
 
           # Verify yq binary works
           run_test "yq --version"
