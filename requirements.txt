@@ -24,7 +24,7 @@ nornir==3.4.1
 # nornir-netmiko: nornir plugin that adds netmiko tasks
 nornir-netmiko==1.0.1
 # nornir-napalm: nornir plugin that adds napalm tasks
-nornir-napalm==0.4.0
+nornir-napalm==0.6.0
 # scrapli: fast, async-ready SSH/Telnet driver for network devices
 scrapli==2024.1.30
 # scrapli-netconf: NETCONF transport plugin for scrapli
