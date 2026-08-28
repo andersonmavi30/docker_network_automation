@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
 
-FROM rockylinux:10
+FROM rockylinux/rockylinux:10
 
 # ─── Build-time arguments ────────────────────────────────────────────────────
 ARG USER=netops
